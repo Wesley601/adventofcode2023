@@ -19,27 +19,35 @@ func main() {
 
 	scanner.Split(bufio.ScanLines)
 
-	total := 0
-	for scanner.Scan() {
-		text := scanner.Text()
-		result, err := SumCalibrationNumber(text)
-		if err != nil {
-			fmt.Printf("err: %v\n", err)
-			fmt.Printf("Error tring to read line %s\n", text)
-			break
-		}
-
-		total += result
+	total, err := SumCalibrationFile(scanner)
+	if err != nil {
+		panic(err)
 	}
 
 	fmt.Printf("total: %v\n", total)
 }
 
-func SumCalibrationNumber(text string) (int, error) {
+func SumCalibrationFile(scanner *bufio.Scanner) (int, error) {
+	total := 0
+	for scanner.Scan() {
+		text := scanner.Text()
+		result, err := ParseCalibrationLine(text)
+		if err != nil {
+			fmt.Printf("Error tring to read line %s\n", text)
+			return 0, err
+		}
+
+		total += result
+	}
+
+	return total, nil
+}
+
+func ParseCalibrationLine(line string) (int, error) {
 	values := []rune{}
 	i := 0
 
-	for _, value := range text {
+	for _, value := range line {
 		if value >= '0' && value <= '9' {
 			values = append(values, value)
 			i++
