@@ -5,10 +5,28 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
 )
 
+type Extractor interface {
+	Extract(chunk string) (int, bool)
+}
+
 func main() {
+	if len(os.Args) < 2 {
+		panic(errors.New("you pass -part1 or -part2"))
+	}
+
+	var solution Extractor
+
+	switch os.Args[1] {
+	case "-part1":
+		solution = &FirstSolution{}
+	case "-part2":
+		solution = &SecondSolution{}
+	default:
+		panic(errors.New("invalid param"))
+	}
+
 	file, err := os.Open("input.txt")
 	if err != nil {
 		panic(err)
@@ -19,45 +37,34 @@ func main() {
 
 	scanner.Split(bufio.ScanLines)
 
-	total, err := SumCalibrationFile(scanner)
-	if err != nil {
-		panic(err)
-	}
+	result := CalculateCalibrationFile(scanner, solution)
 
-	fmt.Printf("total: %v\n", total)
+	fmt.Printf("result: %v\n", result)
 }
 
-func SumCalibrationFile(scanner *bufio.Scanner) (int, error) {
-	total := 0
+func CalculateCalibrationFile(scanner *bufio.Scanner, extractor Extractor) int {
+	var result int
+
 	for scanner.Scan() {
-		text := scanner.Text()
-		result, err := ParseCalibrationLine(text)
-		if err != nil {
-			fmt.Printf("Error tring to read line %s\n", text)
-			return 0, err
+		vv := 0
+		line := scanner.Text()
+
+		for i := 0; i < len(line); i++ {
+			if v, ok := extractor.Extract(line[i:]); ok {
+				vv = v * 10
+				break
+			}
 		}
 
-		total += result
-	}
-
-	return total, nil
-}
-
-func ParseCalibrationLine(line string) (int, error) {
-	values := []rune{}
-	i := 0
-
-	for _, value := range line {
-		if value >= '0' && value <= '9' {
-			values = append(values, value)
-			i++
+		for i := len(line) - 1; i >= 0; i-- {
+			if v, ok := extractor.Extract(line[i:]); ok {
+				vv += v
+				break
+			}
 		}
+
+		result += vv
 	}
 
-	if i == 0 {
-		return 0, errors.New("Invalid string")
-	}
-	str := string([]rune{values[0], values[i-1]})
-
-	return strconv.Atoi(str)
+	return result
 }
