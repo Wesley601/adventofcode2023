@@ -25,74 +25,64 @@ func main() {
 
 	scanner.Split(bufio.ScanLines)
 
-	solution := Part2(scanner)
+	solution := 0
+	for scanner.Scan() {
+		text := scanner.Text()
+		solution += Part1(text)
+	}
 
 	fmt.Printf("solution: %v\n", solution)
 }
 
-func Part1(scanner *bufio.Scanner) int {
-	possibleGameSum := 0
+func Part1(text string) int {
+	games, gameID := SplitGame(text)
 
-outter:
-	for scanner.Scan() {
-		text := scanner.Text()
-		games, gameID := SplitGame(text)
-
-		gameIDInt, err := strconv.Atoi(gameID)
-		if err != nil {
-			panic(err)
-		}
-
-		for _, g := range games {
-			if !IsPossibleGame(g) {
-				continue outter
-			}
-		}
-
-		possibleGameSum += gameIDInt
+	gameIDInt, err := strconv.Atoi(gameID)
+	if err != nil {
+		panic(err)
 	}
 
-	return possibleGameSum
+	for _, g := range games {
+		if !IsPossibleGame(g) {
+			return 0
+		}
+	}
+
+	return gameIDInt
 }
 
-func Part2(scanner *bufio.Scanner) int {
-	solution := 0
+func Part2(text string) int {
+	games, _ := SplitGame(text)
 
-	for scanner.Scan() {
-		max_red := 1
-		max_green := 1
-		max_blue := 1
-		text := scanner.Text()
-		games, _ := SplitGame(text)
+	max_red := 1
+	max_green := 1
+	max_blue := 1
 
-		for _, vv := range games {
-			for _, v := range strings.Split(vv, ",") {
-				color, valueInt, err := GetColorAndValue(v)
-				if err != nil {
-					panic(err)
+	for _, vv := range games {
+		for _, v := range strings.Split(vv, ",") {
+			color, valueInt, err := GetColorAndValue(v)
+			if err != nil {
+				panic(err)
+			}
+
+			switch color {
+			case "red":
+				if valueInt > max_red {
+					max_red = valueInt
 				}
-
-				switch color {
-				case "red":
-					if valueInt > max_red {
-						max_red = valueInt
-					}
-				case "green":
-					if valueInt > max_green {
-						max_green = valueInt
-					}
-				case "blue":
-					if valueInt > max_blue {
-						max_blue = valueInt
-					}
+			case "green":
+				if valueInt > max_green {
+					max_green = valueInt
+				}
+			case "blue":
+				if valueInt > max_blue {
+					max_blue = valueInt
 				}
 			}
 		}
-
-		solution += max_red * max_green * max_blue
 	}
 
-	return solution
+	return max_red * max_green * max_blue
 }
 
 func SplitGame(text string) ([]string, string) {
